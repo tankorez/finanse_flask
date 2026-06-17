@@ -1,0 +1,43 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Статистика</h1>
+        <p>Аналитика расходов и динамика баланса</p>
+    </div>
+    <form method="get" class="period-box">
+        <label>Период:</label>
+        <select name="month" onchange="this.form.submit()" class="form-select">
+            {% for m in months %}
+                <option value="{{ m }}" {{ 'selected' if m == month else '' }}>{{ month_label(m) }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<section class="panel">
+    <h2>Финансовая аналитика за выбранный период</h2>
+
+    <div class="legend-line">
+        {% for name, value in stats.items() %}
+            <div class="legend-chip">
+                <span class="legend-color" style="background: {{ chart_colors[loop.index0 % chart_colors|length] }}"></span>
+                <span>{{ icon_map.get(name, '') }} {{ name }} - {{ money(value) }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="stats-grid">
+        <div class="big-chart"><canvas id="statsPie"></canvas></div>
+        <div class="big-chart"><canvas id="statsLine"></canvas></div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+renderPie("statsPie", {{ stats.keys()|list|tojson }}, {{ stats.values()|list|tojson }}, {{ chart_colors|tojson }});
+renderLine("statsLine", {{ balance_labels|tojson }}, {{ balance_points|tojson }});
+</script>
+{% endblock %}

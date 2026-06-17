@@ -1,0 +1,18 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Настройки</h1>
+        <p>Параметры интерфейса приложения</p>
+    </div>
+</div>
+
+<section class="panel">
+    <h2>Тема оформления</h2>
+    <p class="text-muted">Переключение темы работает на стороне браузера и сохраняется в localStorage.</p>
+    <button class="btn btn-primary rounded-4 px-4" onclick="toggleTheme()">
+        <i class="bi bi-moon-stars me-2"></i>Переключить светлую / темную тему
+    </button>
+</section>
+{% endblock %}

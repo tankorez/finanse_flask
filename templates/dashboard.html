@@ -1,0 +1,118 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-speedometer2 me-2"></i>Обзор</h1>
+        <p>Главная панель учета доходов и расходов</p>
+    </div>
+    <form method="get" class="period-box">
+        <label>Период:</label>
+        <select name="month" onchange="this.form.submit()" class="form-select">
+            {% for m in months %}
+                <option value="{{ m }}" {{ 'selected' if m == month else '' }}>{{ month_label(m) }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<div class="summary-grid">
+    <div class="summary-card income">
+        <div>
+            <span>Доходы</span>
+            <strong>{{ money(income) }}</strong>
+        </div>
+        <div class="summary-icon"><i class="bi bi-arrow-up"></i></div>
+    </div>
+    <div class="summary-card expense">
+        <div>
+            <span>Расходы</span>
+            <strong>{{ money(expense) }}</strong>
+        </div>
+        <div class="summary-icon"><i class="bi bi-arrow-down"></i></div>
+    </div>
+    <div class="summary-card balance">
+        <div>
+            <span>Баланс</span>
+            <strong>{{ money(balance) }}</strong>
+        </div>
+        <div class="summary-icon"><i class="bi bi-bank"></i></div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <section class="panel transactions-panel">
+        <div class="panel-head">
+            <h2>Последние транзакции</h2>
+            <a href="{{ url_for('transactions') }}" class="btn btn-light border rounded-4">Все транзакции</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle modern-table">
+                <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Описание</th>
+                    <th>Категория</th>
+                    <th class="text-end">Сумма</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for r in recent %}
+                <tr>
+                    <td>{{ ru_date(r.tr_date) }}</td>
+                    <td>{{ r.description }}</td>
+                    <td>{{ icon_map.get(r.category, '') }} {{ r.category }}</td>
+                    <td class="text-end fw-bold {{ 'text-success' if r.kind == 'income' else 'text-danger' }}">
+                        {{ '+' if r.kind == 'income' else '-' }}{{ money(r.amount) }}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel chart-panel">
+        <div class="panel-head">
+            <h2>Расходы по категориям</h2>
+        </div>
+        <div class="pie-layout">
+            <div class="pie-wrap">
+                <canvas id="expensePie"></canvas>
+            </div>
+            <div class="legend-list">
+                {% set total = stats.values()|sum %}
+                {% for name, value in stats.items() %}
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: {{ chart_colors[loop.index0 % chart_colors|length] }}"></span>
+                        <span class="legend-name">{{ icon_map.get(name, '') }} {{ name }}</span>
+                        <span class="legend-percent">{{ "%.1f"|format(value / total * 100 if total else 0) }}%</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<section class="panel mt-4">
+    <div class="panel-head">
+        <h2>Динамика баланса</h2>
+    </div>
+    <div class="line-wrap">
+        <canvas id="balanceLine"></canvas>
+    </div>
+</section>
+
+<div class="status-bar">
+    <span>Всего транзакций: {{ rows|length }}</span>
+    <span>База данных: finance.db</span>
+    <span>Валюта: тенге (₸)</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+renderPie("expensePie", {{ stats.keys()|list|tojson }}, {{ stats.values()|list|tojson }}, {{ chart_colors|tojson }});
+renderLine("balanceLine", {{ balance_labels|tojson }}, {{ balance_points|tojson }});
+</script>
+{% endblock %}

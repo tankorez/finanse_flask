@@ -1,0 +1,103 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>
+            {% if kind == 'income' %}Доходы{% elif kind == 'expense' %}Расходы{% else %}Транзакции{% endif %}
+        </h1>
+        <p>Добавление, поиск и удаление финансовых операций</p>
+    </div>
+    <button class="btn btn-primary rounded-4 px-4" data-bs-toggle="modal" data-bs-target="#addModal">
+        <i class="bi bi-plus-lg me-2"></i>Добавить
+    </button>
+</div>
+
+<section class="panel">
+    <form class="filters" method="get">
+        {% if kind %}
+            <input type="hidden" name="kind" value="{{ kind }}">
+        {% endif %}
+        <input name="search" value="{{ search }}" class="form-control rounded-4" placeholder="Поиск по описанию или категории">
+        <select name="month" class="form-select rounded-4">
+            <option value="all" {{ 'selected' if month == 'all' else '' }}>Все периоды</option>
+            {% for m in months %}
+                <option value="{{ m }}" {{ 'selected' if m == month else '' }}>{{ month_label(m) }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-dark rounded-4">Найти</button>
+    </form>
+
+    <div class="table-responsive mt-3">
+        <table class="table align-middle modern-table">
+            <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Описание</th>
+                <th>Категория</th>
+                <th>Тип</th>
+                <th class="text-end">Сумма</th>
+                <th class="text-end">Действие</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for r in rows %}
+                <tr>
+                    <td>{{ ru_date(r.tr_date) }}</td>
+                    <td>{{ r.description }}</td>
+                    <td>{{ r.category }}</td>
+                    <td>{{ type_ru.get(r.kind, r.kind) }}</td>
+                    <td class="text-end fw-bold {{ 'text-success' if r.kind == 'income' else 'text-danger' }}">
+                        {{ '+' if r.kind == 'income' else '-' }}{{ money(r.amount) }}
+                    </td>
+                    <td class="text-end">
+                        <form method="post" action="{{ url_for('delete_transaction', tr_id=r.id) }}" onsubmit="return confirm('Удалить операцию?')">
+                            <button class="btn btn-sm btn-outline-danger rounded-4">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-5">
+            <form method="post" action="{{ url_for('add_transaction') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Новая операция</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body modal-form">
+                    <label>Дата</label>
+                    <input type="date" name="tr_date" class="form-control rounded-4" value="{{ today }}" required>
+
+                    <label>Описание</label>
+                    <input name="description" class="form-control rounded-4" placeholder="Например: продукты" required>
+
+                    <label>Тип операции</label>
+                    <select name="kind" class="form-select rounded-4" required>
+                        <option>Доход</option>
+                        <option selected>Расход</option>
+                    </select>
+
+                    <label>Категория</label>
+                    <select name="category" class="form-select rounded-4" required>
+                        {% for c in categories %}
+                            <option>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label>Сумма</label>
+                    <input name="amount" type="number" step="0.01" class="form-control rounded-4" placeholder="Сумма в тенге" required>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary rounded-4 px-4">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
